@@ -1,12 +1,17 @@
-const version = "0.1"
+const version = "0.3"
+const oldVersion = version -.1
 
 self.addEventListener("install", ()=>{
    console.log("Install Service Worker version " + version)
    return self.skipWaiting()
 })
 
-self.addEventListener("activate", ()=>{
-   console.log("Activate Service Worker version " + version)
+self.addEventListener("activate", (event)=>{
+   event.waitUntil(
+      caches.delete('desing-cache-' + oldVersion)
+   )
+   return self.clients.claim()
+   // console.log("Activate Service Worker version " + version)
 })
 
 self.addEventListener('fetch', () => {
@@ -19,7 +24,8 @@ if(workbox){
    console.log('Yes, workbox is there')
    workbox.precaching.precacheAndRoute([
       {
-         "url" : "index.html"
+         "url" : "index.html",
+         revision: version
       },
       {
          "url" : "style.css"
@@ -32,7 +38,7 @@ if(workbox){
    workbox.routing.registerRoute(
       /(.*)\.(?:png|gif|jpg|css)$/,
       new workbox.strategies.CacheFirst({
-         cacheName: "design-cache",
+         cacheName: "design-cache-" + version,
          plugins: [
             new workbox.expiration.Plugin({
                maxAgeSeconds: 30*24*60*60, //30 days
